@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Auth | Google & Phone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: radial-gradient(circle at top left, #4f46e5, #2e1065);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Animated background elements */
+        .bg-blob {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(99, 102, 241, 0.2);
+            filter: blur(80px);
+            border-radius: 50%;
+            z-index: -1;
+            animation: mix 20s infinite alternate;
+        }
+
+        @keyframes mix {
+            0% { transform: translate(-10%, -10%); }
+            100% { transform: translate(20%, 20%); }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-style {
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .input-style:focus {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+        }
+
+        .hidden { display: none; }
+        
+        /* Smooth Fade In */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blob"></div>
+
+    <div class="glass-card p-10 w-full max-w-md rounded-[2rem] mx-4 fade-in">
+        <div id="auth-container">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-4 shadow-lg shadow-indigo-200">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Security Portal</h1>
+                <p class="text-gray-500 mt-2">Login using your preferred method</p>
+            </div>
+
+            <button id="google-btn" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-100 py-3.5 px-4 rounded-xl hover:bg-gray-50 transition-all font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200/50">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                Continue with Google
+            </button>
+
+            <div class="relative my-8">
+                <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-gray-200"></span></div>
+                <div class="relative flex justify-center text-xs uppercase tracking-widest"><span class="px-3 bg-transparent text-gray-400 font-bold">Secure OTP</span></div>
+            </div>
+
+            <div id="phone-section" class="space-y-5">
+                <div class="relative">
+                    <input type="tel" id="phone-number" placeholder="+91 00000 00000" 
+                        class="input-style w-full p-4 pl-5 border border-gray-200 rounded-xl outline-none ring-offset-2 focus:ring-2 focus:ring-indigo-500 font-medium">
+                </div>
+                <div id="recaptcha-container"></div>
+                <button id="send-otp-btn" class="btn-primary w-full text-white py-4 rounded-xl font-bold shadow-lg">
+                    Get Access Code
+                </button>
+            </div>
+
+            <div id="otp-section" class="hidden space-y-5 fade-in">
+                <div class="text-center">
+                    <p class="text-sm text-indigo-600 font-semibold mb-2">Check your messages</p>
+                    <input type="text" id="otp-code" maxlength="6" placeholder="0 0 0 0 0 0" 
+                        class="input-style w-full p-4 border border-gray-200 rounded-xl outline-none text-center text-2xl tracking-[0.5em] font-bold focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button id="verify-otp-btn" class="btn-primary w-full text-white py-4 rounded-xl font-bold shadow-lg">
+                    Confirm & Enter
+                </button>
+                <button onclick="location.reload()" class="w-full text-sm font-medium text-gray-400 hover:text-indigo-600 transition-colors">Wrong number? Go back</button>
+            </div>
+        </div>
+
+        <div id="user-profile" class="hidden text-center space-y-6 fade-in">
+            <div class="relative inline-block">
+                <div class="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-3xl mx-auto flex items-center justify-center shadow-2xl rotate-3">
+                    <span class="text-4xl -rotate-3">🚀</span>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900" id="user-display-name">Master User</h2>
+                <p id="user-id" class="text-sm text-indigo-500 font-medium mt-1"></p>
+            </div>
+            <div class="pt-4">
+                <button id="logout-btn" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all shadow-xl">
+                    Sign Out Safely
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, GoogleAuthProvider, signInWithPopup, 
+            RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBX9uJbikiD06G_P8-D_lYBEWZIu_UZNbc",
+            authDomain: "login-8b6ce.firebaseapp.com",
+            projectId: "login-8b6ce",
+            storageBucket: "login-8b6ce.firebasestorage.app",
+            messagingSenderId: "634773548210",
+            appId: "1:634773548210:web:ec845d8f1269df3e76adab"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        const phoneSection = document.getElementById('phone-section');
+        const otpSection = document.getElementById('otp-section');
+        const userProfile = document.getElementById('user-profile');
+        const authContainer = document.getElementById('auth-container');
+        const googleBtn = document.getElementById('google-btn');
+        const sendOtpBtn = document.getElementById('send-otp-btn');
+        const verifyOtpBtn = document.getElementById('verify-otp-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        googleBtn.onclick = async () => {
+            try { await signInWithPopup(auth, googleProvider); } 
+            catch (e) { alert(e.message); }
+        };
+
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
+
+        sendOtpBtn.onclick = async () => {
+            const phoneNumber = document.getElementById('phone-number').value;
+            try {
+                window.confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+                phoneSection.classList.add('hidden');
+                googleBtn.classList.add('hidden');
+                document.querySelector('.relative.my-8').classList.add('hidden');
+                otpSection.classList.remove('hidden');
+            } catch (e) { alert(e.message); location.reload(); }
+        };
+
+        verifyOtpBtn.onclick = async () => {
+            const code = document.getElementById('otp-code').value;
+            try { await window.confirmationResult.confirm(code); } 
+            catch (e) { alert("Invalid OTP"); }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authContainer.classList.add('hidden');
+                userProfile.classList.remove('hidden');
+                document.getElementById('user-display-name').innerText = user.displayName || user.phoneNumber;
+                document.getElementById('user-id').innerText = user.email || "Verified Member";
+            } else {
+                authContainer.classList.remove('hidden');
+                userProfile.classList.add('hidden');
+            }
+        });
+
+        logoutBtn.onclick = () => signOut(auth);
+    </script>
+</body>
+</html>
